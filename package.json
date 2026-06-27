@@ -1,0 +1,24 @@
+{
+  "name": "claude-vllm-proxy",
+  "version": "1.0.0",
+  "description": "Proxy entre Claude Code y vLLM",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node app.js"
+  },
+  "dependencies": {
+    "@fastify/http-proxy": "^9.5.0",
+    "fastify": "^4.29.1"
+  },
+  "optionalDependencies": {
+    "jq": "^1.11.0"
+  },
+  "keywords": [
+    "claude",
+    "vllm",
+    "proxy"
+  ],
+  "author": "",
+  "license": "MIT"
+}

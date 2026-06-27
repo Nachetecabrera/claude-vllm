@@ -1,0 +1,54 @@
+# Node.js
+node_modules/
+package-lock.json
+npm-debug.log*
+.npm
+.nvmrc
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Configs personales (secrets)
+config.json
+config.*.json
+*.env
+.env
+.env.local
+.env.*.local
+
+# Executables y build
+*.exe
+*.msi
+build/
+
+# Scripts de prueba
+test-*.ps1
+test-*.sh
+
+# Temporales
+*.tmp
+*.temp
+*~
