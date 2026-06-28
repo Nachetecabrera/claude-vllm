@@ -11,6 +11,8 @@ A proxy that enables Claude Code to work with vLLM (NVIDIA NGC or local server).
 
 ## Table of Contents
 
+- [How It Works](#how-it-works)
+- [Architecture](#architecture)
 - [Requirements](#requirements)
 - [Quick Start Installation](#quick-start-installation)
 - [Configuration](#configuration)
@@ -20,6 +22,55 @@ A proxy that enables Claude Code to work with vLLM (NVIDIA NGC or local server).
 - [Environment Variables](#environment-variables)
 - [Development](#development)
 - [Troubleshooting](#troubleshooting)
+
+---
+
+## How It Works
+
+The Claude vLLM Proxy acts as a translation layer between Claude Code and vLLM:
+
+1. **Claude Code** sends API requests to the proxy (port 8010 by default)
+2. The proxy **normalizes** the request:
+   - Converts system/developer messages to the top-level `system` field (or user messages)
+   - Removes incompatible fields like `context_management`, `output_config`, `thinking`
+   - Drops tool fields like `strict`, `defer_loading`
+   - Strips `cache_control` from requests
+   - Forces a specific model if configured
+3. The proxy **forwards** the normalized request to vLLM
+4. The response is streamed back to Claude Code
+
+This allows Claude Code to work with any vLLM-compatible server without requiring modifications to Claude itself.
+
+---
+
+## Architecture
+
+```
+┌─────────────┐      ┌─────────────────────┐      ┌──────────────┐
+│             │      │                     │      │              │
+│  Claude     │─────▶│   Claude vLLM       │─────▶│    vLLM      │
+│   Code      │      │      Proxy          │      │   Server     │
+│             │      │   (Port 8010)       │      │              │
+└─────────────┘      └─────────────────────┘      └──────────────┘
+     │                        │                         │
+     │                         └─────────────────────────┘
+     │                                      │
+     │                              Normalizes requests:
+     │                              - System message hoisting
+     │                              - Field removal
+     │                              - Model enforcement
+     │                                      │
+     │                                      ▼
+     │                         ┌──────────────────────┐
+     │                         │   Forwards to vLLM   │
+     │                         └──────────────────────┘
+     │                                      │
+     │                                      ▼
+     │                         ┌──────────────────────┐
+     │                         │   Streams back to    │
+     │                         │    Claude Code       │
+     └─────────────────────────┘
+```
 
 ---
 
@@ -45,18 +96,19 @@ A proxy that enables Claude Code to work with vLLM (NVIDIA NGC or local server).
 
 ### Windows
 ```powershell
-.\install.ps1
+.\scripts\install.ps1
 ```
 
 ### Linux/macOS
 ```bash
-chmod +x install.sh && ./install.sh
+chmod +x scripts/install.sh && ./scripts/install.sh
 ```
 
 The installation script:
-- ✅ Adds the directory to PATH permanently
+- ✅ Adds the scripts directory to PATH permanently
 - ✅ Creates `claudevllm`, `claudevllmd`, `spcvp`, `spcvn` commands
 - ✅ Sets up both stacks (Python and Node.js)
+- ✅ Uses relative paths (works from any directory)
 
 **Restart your terminal** after installation for changes to take effect.
 
@@ -66,24 +118,22 @@ The installation script:
 
 ### 1. Copy example config file
 
-**Windows (Python):**
-```powershell
-copy docs\config.example.json src\python\config.json
-```
-
-**Linux/macOS (Python):**
+**Python:**
 ```bash
-cp docs/config.example.json src/python/config.json
+# Windows
+copy src\python\config.example.json src\python\config.json
+
+# Linux/macOS
+cp src/python/config.example.json src/python/config.json
 ```
 
-**Windows (Node.js):**
-```powershell
-copy docs\config.example.json src\node\config.json
-```
-
-**Linux/macOS (Node.js):**
+**Node.js:**
 ```bash
-cp docs/config.example.json src/node/config.json
+# Windows
+copy src\node\config.example.json src\node\config.json
+
+# Linux/macOS
+cp src/node/config.example.json src/node/config.json
 ```
 
 ### 2. Edit `config.json`
@@ -106,7 +156,8 @@ cp docs/config.example.json src/node/config.json
 - `forward_url`: Your vLLM server URL (NGC or local)
 - `model`: Model to enforce (optional, defaults to vLLM's default)
 - `system_mode`: `"hoist"` (recommended) or `"user"`
-- `drop_top_level_fields`: Fields to drop from requests (default: `context_management,output_config,thinking`)
+- `drop_top_level_fields`: Fields to drop from requests (comma-separated)
+- `drop_tool_fields`: Tool fields to drop (comma-separated)
 
 ### 3. Claude Code Configuration
 
@@ -142,10 +193,10 @@ spcvp    # Start proxy with Python
 spcvn    # Start proxy with Node.js
 
 # Or directly (without installation)
-.\start-proxy-python.ps1    # Windows - Python
-.\start-proxy-node.ps1      # Windows - Node.js
-./start-proxy-python.sh     # Unix - Python
-./start-proxy-node.sh       # Unix - Node.js
+.\start\start-proxy-python.ps1    # Windows - Python
+.\start\start-proxy-node.ps1      # Windows - Node.js
+./start/start-proxy-python.sh     # Unix - Python
+./start/start-proxy-node.sh       # Unix - Node.js
 ```
 
 ### Run Claude with the proxy
@@ -163,7 +214,7 @@ Both commands work on Windows, Linux, and macOS after installation.
 
 | Command | Description |
 |---------|-------------|
-| `claudevllm` | Run Claude with proxy (Python by default) |
+| `claudevllm` | Run Claude with proxy (uses config.json) |
 | `claudevllmd` | Run Claude with `--permission-mode bypassPermissions` |
 | `spcvp` | Start proxy with Python |
 | `spcvn` | Start proxy with Node.js |
@@ -239,15 +290,15 @@ Error response:
 **Python:**
 ```bash
 cd src/python
-.\start-proxy-python.ps1    # Windows
-./start-proxy-python.sh     # Unix
+.\start\start-proxy-python.ps1    # Windows
+./start/start-proxy-python.sh     # Unix
 ```
 
 **Node.js:**
 ```bash
 cd src/node
-.\start-proxy-node.ps1    # Windows
-./start-proxy-node.sh     # Unix
+.\start\start-proxy-node.ps1    # Windows
+./start/start-proxy-node.sh     # Unix
 ```
 
 ### Build (packaging)
@@ -302,10 +353,10 @@ Verify:
 ```bash
 # View logs in real-time
 # Windows
-.\start-proxy-python.ps1
+.\start\start-proxy-python.ps1
 
 # Linux/macOS
-./start-proxy-python.sh
+./start/start-proxy-python.sh
 
 # Then check logs in console output
 ```
@@ -325,10 +376,12 @@ claude-vllm-proxy/
 │       ├── app.js           # Main application
 │       ├── package.json     # Dependencies
 │       └── config.json      # Configuration
-├── scripts/                 # Installation scripts
-│   ├── install.ps1
-│   ├── install.sh
-│   └── claude-local/        # Claude configuration
+├── scripts/
+│   ├── install.ps1          # Windows installer
+│   ├── install.sh           # Unix installer
+│   └── claude-local/        # Claude configuration helpers
+│       ├── ps1/             # PowerShell scripts
+│       └── sh/              # Bash scripts
 ├── start/                   # Proxy startup scripts
 │   ├── start-proxy-python.ps1
 │   ├── start-proxy-python.sh
@@ -337,12 +390,10 @@ claude-vllm-proxy/
 ├── docs/                    # Documentation
 │   ├── config.example.json
 │   └── config.schema.json
-├── install.ps1              # Windows installer
-├── install.sh               # Unix installer
+├── install.ps1              # Windows installer (deprecated)
+├── install.sh               # Unix installer (deprecated)
 └── README.md                # This file
 ```
-
-See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for detailed structure information.
 
 ---
 

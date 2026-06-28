@@ -26,19 +26,19 @@ $profileContent = @"
 `$projectDir = "$projectRoot"
 
 function claudevllm {
-    & `"C:\Users\ignac\OneDrive\Documents\claude-vllm-proxy\scripts\claude-local\ps1\claudevllm.ps1`"
+    & `"$(Join-Path $projectDir 'scripts\claude-local\ps1\claudevllm.ps1')`"
 }
 
 function claudevllmd {
-    & `"C:\Users\ignac\OneDrive\Documents\claude-vllm-proxy\scripts\claude-local\ps1\claudevllmd.ps1`"
+    & `"$(Join-Path $projectDir 'scripts\claude-local\ps1\claudevllmd.ps1')`"
 }
 
 function spcvp {
-    & `"C:\Users\ignac\OneDrive\Documents\claude-vllm-proxy\start\start-proxy-python.ps1`"
+    & `"$(Join-Path $projectDir 'start\start-proxy-python.ps1')`"
 }
 
 function spcvn {
-    & `"C:\Users\ignac\OneDrive\Documents\claude-vllm-proxy\start\start-proxy-node.ps1`"
+    & `"$(Join-Path $projectDir 'start\start-proxy-node.ps1')`"
 }
 "@
 
