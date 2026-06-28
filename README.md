@@ -1,35 +1,47 @@
 # 🦙 Claude vLLM Proxy
 
-Proxy para usar Claude Code con vLLM (NVIDIA NGC).
+A proxy that enables Claude Code to work with vLLM (NVIDIA NGC or local server).
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![Node.js](https://img.shields.io/badge/node.js-18+-green.svg)](https://nodejs.org/)
+[![vLLM](https://img.shields.io/badge/vLLM-compatible-green.svg)](https://github.com/vllm-project/vllm)
 
+---
 
-## Características
+## Table of Contents
 
-- ✅ Proxy entre Claude Code y vLLM
-- ✅ Configuración vía `config.json`
-- ✅ Cross-platform: Windows, Linux, macOS
-- ✅ Transformación de requests (system messages, fields dropping)
-- ✅ Health checks (`/healthz`, `/readyz`)
-- ✅ **Doble stack**: Python y Node.js disponibles
+- [Requirements](#requirements)
+- [Quick Start Installation](#quick-start-installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Available Commands](#available-commands)
+- [Health Endpoints](#health-endpoints)
+- [Environment Variables](#environment-variables)
+- [Development](#development)
+- [Troubleshooting](#troubleshooting)
 
-## Requisitos
+---
 
-- **Python**: 3.10 o superior (para el proxy)
-- **Node.js**: 18 o superior (opcional, para alternativa Node)
-- **vLLM**: Servidor vLLM en NGC o local
+## Requirements
 
-### Dependencias
+| Component | Version | Notes |
+|-----------|---------|-------|
+| **Claude Code** | 2.1.140+ | CLI client |
+| **Python** | 3.10+ | For Python proxy (FastAPI) |
+| **Node.js** | 18+ | For Node.js proxy (Fastify) |
+| **vLLM** | latest | Server on NVIDIA NGC or local |
 
-| Stack | Comando |
+### Dependencies
+
+| Stack | Command |
 |-------|---------|
 | Python | `pip install -r requirements.txt` |
 | Node.js | `npm install` |
 
-## Instalación
+---
+
+## Quick Start Installation
 
 ### Windows
 ```powershell
@@ -41,16 +53,40 @@ Proxy para usar Claude Code con vLLM (NVIDIA NGC).
 chmod +x install.sh && ./install.sh
 ```
 
-Este script:
-- ✅ Agrega el directorio al PATH permanentemente
-- ✅ Crea los comandos `claudevllm` y `claudevllmd`
-- ✅ Configura ambos stacks (Python y Node.js)
+The installation script:
+- ✅ Adds the directory to PATH permanently
+- ✅ Creates `claudevllm`, `claudevllmd`, `spcvp`, `spcvn` commands
+- ✅ Sets up both stacks (Python and Node.js)
 
-**Reinicia tu terminal** después de instalar para que los cambios surtan efecto.
+**Restart your terminal** after installation for changes to take effect.
 
-## Configuración
+---
 
-Edita `config.json` para configurar el proxy:
+## Configuration
+
+### 1. Copy example config file
+
+**Windows (Python):**
+```powershell
+copy docs\config.example.json src\python\config.json
+```
+
+**Linux/macOS (Python):**
+```bash
+cp docs/config.example.json src/python/config.json
+```
+
+**Windows (Node.js):**
+```powershell
+copy docs\config.example.json src\node\config.json
+```
+
+**Linux/macOS (Node.js):**
+```bash
+cp docs/config.example.json src/node/config.json
+```
+
+### 2. Edit `config.json`
 
 ```json
 {
@@ -66,9 +102,15 @@ Edita `config.json` para configurar el proxy:
 }
 ```
 
-### Configuración de Claude Code
+**Key configuration:**
+- `forward_url`: Your vLLM server URL (NGC or local)
+- `model`: Model to enforce (optional, defaults to vLLM's default)
+- `system_mode`: `"hoist"` (recommended) or `"user"`
+- `drop_top_level_fields`: Fields to drop from requests (default: `context_management,output_config,thinking`)
 
-En tu `claude_desktop.toml` o variables de entorno:
+### 3. Claude Code Configuration
+
+Add to your `claude_desktop.toml`:
 
 ```toml
 [anthropic]
@@ -76,7 +118,7 @@ base_url = "http://localhost:8010"
 api_key = "dummy"
 ```
 
-O en variables de entorno:
+Or use environment variables:
 
 ```bash
 # Windows (PowerShell)
@@ -88,103 +130,127 @@ export ANTHROPIC_BASE_URL="http://localhost:8010"
 export ANTHROPIC_API_KEY="dummy"
 ```
 
-## Uso
+---
 
-### Iniciar el proxy
+## Usage
 
-```bash
-# Windows
-.\start-proxy-python.ps1    # Python
-.\start-proxy-node.ps1      # Node.js
-
-# Linux/macOS
-./start-proxy-python.sh     # Python
-./start-proxy-node.sh       # Node.js
-```
-
-### Comandos disponibles (después de instalar)
+### Start the proxy
 
 ```bash
-claudevllm        # Ejecuta normal con config.json
-claudevllmd       # Ejecuta con --permission-mode bypassPermissions
+# Using shortcuts (recommended)
+spcvp    # Start proxy with Python
+spcvn    # Start proxy with Node.js
+
+# Or directly (without installation)
+.\start-proxy-python.ps1    # Windows - Python
+.\start-proxy-node.ps1      # Windows - Node.js
+./start-proxy-python.sh     # Unix - Python
+./start-proxy-node.sh       # Unix - Node.js
 ```
 
-Ambos comandos funcionan en Windows, Linux y macOS después de instalar.
+### Run Claude with the proxy
 
-## Variables de Entorno
+```bash
+claudevllm        # Run Claude normal with config.json
+claudevllmd       # Run Claude with --permission-mode bypassPermissions
+```
 
-| Variable | Descripción | Default |
-|----------|-------------|---------|
-| `UPSTREAM_URL` | URL del servidor vLLM | `http://localhost:8000` |
-| `FORCE_MODEL` | Forzar modelo específico | `""` (usa config.json) |
-| `SYSTEM_MODE` | Cómo manejar system messages | `hoist` |
-| `LOG_LEVEL` | Nivel de logging | `INFO` |
-| `LISTEN_IP` | IP del proxy | `0.0.0.0` |
-| `LISTEN_PORT` | Puerto del proxy | `8010` |
+Both commands work on Windows, Linux, and macOS after installation.
 
-### Configuración en `config.json`
+---
 
+## Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `claudevllm` | Run Claude with proxy (Python by default) |
+| `claudevllmd` | Run Claude with `--permission-mode bypassPermissions` |
+| `spcvp` | Start proxy with Python |
+| `spcvn` | Start proxy with Node.js |
+
+---
+
+## Health Endpoints
+
+### `/healthz` - Proxy status
+```bash
+curl http://localhost:8010/healthz
+```
+
+Success response:
 ```json
 {
-  "listen_ip": "0.0.0.0",
-  "listen_port": 8010,
-  "forward_url": "http://localhost:8000",
-  "model": "qwen3-coder-next",
-  "log_level": "INFO",
+  "status": "ok",
+  "upstream": "http://100.85.253.101:8000",
+  "force_model": "qwen3-coder-next",
   "system_mode": "hoist"
 }
 ```
 
-## Health Checks
-
-- `/healthz` - Verifica que el proxy esté funcionando
-- `/readyz` - Verifica que el proxy y el servidor upstream estén listos
-
-## Estructura del Proyecto
-
-```
-claude-vllm-proxy/
-├── app.py                 # Código principal (FastAPI - Python)
-├── app.js                 # Código principal (Fastify - Node.js)
-├── config.json            # Configuración
-├── config.schema.json     # Schema JSON para validación
-├── requirements.txt       # Dependencias Python
-├── package.json           # Dependencias Node.js
-├── install.ps1           # Instalación Windows (PATH + aliases)
-├── install.sh            # Instalación Unix (PATH + aliases)
-├── start-proxy-python.ps1 # Iniciar proxy Python Windows
-├── start-proxy-python.sh # Iniciar proxy Python Unix
-├── start-proxy-node.ps1  # Iniciar proxy Node.js Windows
-├── start-proxy-node.sh   # Iniciar proxy Node.js Unix
-├── claude-local.ps1      # Config claude Windows
-├── claude-local.sh       # Config claude Unix
-├── claudevllm.ps1        # Alias claude normal Windows
-├── claudevllm.sh         # Alias claude normal Unix
-├── claudevllmd.ps1       # Alias claude bypass Windows
-├── claudevllmd.sh        # Alias claude bypass Unix
-├── README.md             # Este archivo
-└── .gitignore           # Archivos a ignorar
-```
-
-## Desarrollo
-
-### Correr en modo desarrollo
-
+### `/readyz` - Proxy + upstream status
 ```bash
-# Windows - Python
-.\start-proxy-python.ps1
-
-# Windows - Node.js
-.\start-proxy-node.ps1
-
-# Unix - Python
-./start-proxy-python.sh
-
-# Unix - Node.js
-./start-proxy-node.sh
+curl http://localhost:8010/readyz
 ```
 
-### Build (empaquetar como executable)
+Success response:
+```json
+{
+  "ready": true,
+  "upstream_status": 200
+}
+```
+
+Error response:
+```json
+{
+  "ready": false,
+  "error": "Connection refused"
+}
+```
+
+---
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `UPSTREAM_URL` | URL of the vLLM server | `http://localhost:8000` |
+| `UPSTREAM_API_KEY` | API Key for vLLM server | (empty) |
+| `FORCE_MODEL` | Force specific model | (empty, uses config.json) |
+| `SYSTEM_MODE` | How to handle system messages | `"hoist"` |
+| `LOG_LEVEL` | Logging level | `"INFO"` |
+| `LISTEN_IP` | Proxy IP address | `"0.0.0.0"` |
+| `LISTEN_PORT` | Proxy port | `8010` |
+| `DROP_TOP_LEVEL_FIELDS` | Fields to drop (CSV) | `context_management,output_config,thinking` |
+| `DROP_TOOL_FIELDS` | Tool fields to drop (CSV) | `strict,defer_loading` |
+| `STRIP_CACHE_CONTROL` | Remove cache_control | `true` |
+
+### System Modes
+
+- **`hoist`** (recommended): Moves `system`/`developer` messages to the top-level `system` field
+- **`user`**: Converts system messages to `user` messages with `<system-update>` tag
+
+---
+
+## Development
+
+### Run in development mode
+
+**Python:**
+```bash
+cd src/python
+.\start-proxy-python.ps1    # Windows
+./start-proxy-python.sh     # Unix
+```
+
+**Node.js:**
+```bash
+cd src/node
+.\start-proxy-node.ps1    # Windows
+./start-proxy-node.sh     # Unix
+```
+
+### Build (packaging)
 
 **Python:**
 ```bash
@@ -198,18 +264,22 @@ npm install -g @vercel/ncc
 ncc build app.js -o dist
 ```
 
+---
+
 ## Troubleshooting
 
-### Comando no encontrado después de instalar
+### Command not found after installation
+
 ```bash
-# Windows - Reiniciar terminal o ejecutar:
+# Windows - Restart terminal or run:
 $env:Path = [Environment]::GetEnvironmentVariable('Path', 'User')
 
 # Linux/macOS
-source ~/.bashrc  # o ~/.zshrc
+source ~/.bashrc  # or ~/.zshrc
 ```
 
-### Puerto en uso
+### Port already in use
+
 ```bash
 # Windows
 netstat -ano | findstr :8010
@@ -220,6 +290,71 @@ lsof -i :8010
 kill -9 <PID>
 ```
 
-## Licencia
+### Connection error to vLLM
+
+Verify:
+1. vLLM server is running: `curl http://<vllm-host>:8000/v1/models`
+2. The URL in `config.json` is correct
+3. No firewall or network issues
+
+### Verbose logging
+
+```bash
+# View logs in real-time
+# Windows
+.\start-proxy-python.ps1
+
+# Linux/macOS
+./start-proxy-python.sh
+
+# Then check logs in console output
+```
+
+---
+
+## Project Structure
+
+```
+claude-vllm-proxy/
+├── src/
+│   ├── python/              # Python proxy (FastAPI)
+│   │   ├── app.py           # Main application
+│   │   ├── requirements.txt # Dependencies
+│   │   └── config.json      # Configuration
+│   └── node/                # Node.js proxy (Fastify)
+│       ├── app.js           # Main application
+│       ├── package.json     # Dependencies
+│       └── config.json      # Configuration
+├── scripts/                 # Installation scripts
+│   ├── install.ps1
+│   ├── install.sh
+│   └── claude-local/        # Claude configuration
+├── start/                   # Proxy startup scripts
+│   ├── start-proxy-python.ps1
+│   ├── start-proxy-python.sh
+│   ├── start-proxy-node.ps1
+│   └── start-proxy-node.sh
+├── docs/                    # Documentation
+│   ├── config.example.json
+│   └── config.schema.json
+├── install.ps1              # Windows installer
+├── install.sh               # Unix installer
+└── README.md                # This file
+```
+
+See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for detailed structure information.
+
+---
+
+## License
 
 MIT
+
+---
+
+## Credits
+
+- [Claude Code](https://claude.ai/)
+- [vLLM](https://github.com/vllm-project/vllm)
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [Fastify](https://www.fastify.io/)

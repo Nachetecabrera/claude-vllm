@@ -23,43 +23,28 @@ if (!(Test-Path $profilePath)) {
 
 $profileContent = @"
 # claude-vllm-proxy aliases (auto-generated)
-`$projectDir = "$scriptDir"
+`$projectDir = "$projectRoot"
 
 function claudevllm {
-    . `"$`projectDir`/scripts/claude-local/ps1/claude-local.ps1`"
-    claude
+    & `"C:\Users\ignac\OneDrive\Documents\claude-vllm-proxy\scripts\claude-local\ps1\claudevllm.ps1`"
 }
 
 function claudevllmd {
-    . `"$`projectDir`/scripts/claude-local/ps1/claude-local.ps1`"
-    claude --permission-mode bypassPermissions
+    & `"C:\Users\ignac\OneDrive\Documents\claude-vllm-proxy\scripts\claude-local\ps1\claudevllmd.ps1`"
 }
 
 function spcvp {
-    . `"$`projectDir`/scripts/claude-local/ps1/claude-local.ps1`"
-    & `"$`projectDir`/start/start-proxy-python.ps1`"
+    & `"C:\Users\ignac\OneDrive\Documents\claude-vllm-proxy\start\start-proxy-python.ps1`"
 }
 
 function spcvn {
-    . `"$`projectDir`/scripts/claude-local/ps1/claude-local.ps1`"
-    & `"$`projectDir`/start/start-proxy-node.ps1`"
+    & `"C:\Users\ignac\OneDrive\Documents\claude-vllm-proxy\start\start-proxy-node.ps1`"
 }
 "@
 
-# Leer contenido actual
-if (Test-Path $profilePath) {
-    $currentProfile = Get-Content $profilePath -Raw
-} else {
-    $currentProfile = ""
-}
-
-# Agregar solo si no existe
-if ($currentProfile -notlike "*claudevllm*") {
-    Add-Content -Path $profilePath -Value "`n$profileContent"
-    Write-Host "Added aliases to PowerShell profile" -ForegroundColor Green
-} else {
-    Write-Host "Aliases already in PowerShell profile" -ForegroundColor Cyan
-}
+# Agregar aliases al profile
+Add-Content -Path $profilePath -Value "`n$profileContent"
+Write-Host "Added aliases to PowerShell profile" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "Installation complete!" -ForegroundColor Green

@@ -4,17 +4,24 @@
 const fs = require('fs');
 const path = require('path');
 
-// Cargar configuración
+// Buscar config.json en múltiples ubicaciones
 const scriptDir = __dirname;
-const configPath = path.join(scriptDir, 'config.json');
+const possiblePaths = [
+    path.join(scriptDir, 'config.json'),          // Same dir as app.js
+    path.join(scriptDir, '..', 'config.json'),    // Parent dir
+    path.join(scriptDir, '..', '..', 'config.json'), // Two dirs up
+];
 
 let config = {};
-if (fs.existsSync(configPath)) {
-    try {
-        config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        console.log('Loaded config.json:', Object.keys(config));
-    } catch (e) {
-        console.warn('Failed to parse config.json:', e.message);
+for (const configPath of possiblePaths) {
+    if (fs.existsSync(configPath)) {
+        try {
+            config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            console.log('Loaded config.json:', Object.keys(config));
+            break; // Use first found config
+        } catch (e) {
+            console.warn('Failed to parse config.json:', e.message);
+        }
     }
 }
 

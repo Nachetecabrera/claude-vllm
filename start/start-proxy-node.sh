@@ -4,10 +4,11 @@
 # Requiere: Node.js 18+ y dependencias (fastify, @fastify/http-proxy)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+NODE_DIR="$PROJECT_ROOT/src/node"
 
 # Cargar configuración
-CONFIG_PATH="$SCRIPT_DIR/config.json"
+CONFIG_PATH="$NODE_DIR/config.json"
 
 # Valores por defecto
 LISTEN_IP="0.0.0.0"
@@ -35,19 +36,23 @@ echo "Node version:"
 node --version
 
 # Verificar si package.json existe
-if [ ! -f "package.json" ]; then
+if [ ! -f "$NODE_DIR/package.json" ]; then
     echo "Creating package.json..."
+    cd "$NODE_DIR"
     npm init -y
 fi
 
 # Verificar e instalar dependencias
-if [ ! -d "node_modules" ]; then
+if [ ! -d "$NODE_DIR/node_modules" ]; then
     echo "Installing dependencies..."
+    cd "$NODE_DIR"
     npm install fastify @fastify/http-proxy
+    cd "$PROJECT_ROOT"
 fi
 
 # Iniciar el proxy
 export LISTEN_IP="$LISTEN_IP"
 export LISTEN_PORT="$LISTEN_PORT"
 
+cd "$NODE_DIR"
 node app.js

@@ -34,7 +34,17 @@ def get_config_dir() -> str:
     """Get the directory where config.json is located."""
     if getattr(sys, "frozen", False):
         return sys._MEIPASS
-    return os.path.dirname(os.path.abspath(__file__))
+    # Try to find config.json in multiple locations
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    possible_paths = [
+        os.path.join(script_dir, "config.json"),          # Same dir as app.py
+        os.path.join(script_dir, "..", "config.json"),    # Parent dir
+        os.path.join(script_dir, "..", "..", "config.json"), # Two dirs up
+    ]
+    for path in possible_paths:
+        if os.path.exists(path):
+            return os.path.dirname(path)
+    return script_dir
 
 
 def load_config_from_json() -> dict:

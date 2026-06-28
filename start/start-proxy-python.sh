@@ -4,10 +4,11 @@
 # Requiere: Python 3.10+ y dependencias (fastapi, httpx, uvicorn)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PYTHON_DIR="$PROJECT_ROOT/src/python"
 
 # Cargar configuración
-CONFIG_PATH="$SCRIPT_DIR/config.json"
+CONFIG_PATH="$PYTHON_DIR/config.json"
 
 # Valores por defecto
 LISTEN_IP="0.0.0.0"
@@ -35,11 +36,15 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-# Verificar dependencias
-python3 -c "import fastapi, httpx, uvicorn" 2>/dev/null
-if [ $? -ne 0 ]; then
-    echo "Installing dependencies..."
-    python3 -m pip install fastapi httpx uvicorn
+# Verificar e instalar dependencias
+REQUIREMENTS_PATH="$PYTHON_DIR/requirements.txt"
+if [ -f "$REQUIREMENTS_PATH" ]; then
+    if ! python3 -c "import fastapi, httpx, uvicorn" 2>/dev/null; then
+        echo "Installing dependencies..."
+        python3 -m pip install -r "$REQUIREMENTS_PATH"
+    fi
+else
+    echo "Warning: requirements.txt not found at $REQUIREMENTS_PATH"
 fi
 
 # Iniciar el proxy
@@ -48,4 +53,5 @@ export LISTEN_PORT="$LISTEN_PORT"
 export LOG_LEVEL="$LOG_LEVEL"
 export SYSTEM_MODE="$SYSTEM_MODE"
 
+cd "$PYTHON_DIR"
 python3 -m uvicorn app:app --host "$LISTEN_IP" --port "$LISTEN_PORT"

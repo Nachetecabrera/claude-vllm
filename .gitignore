@@ -31,7 +31,7 @@ Thumbs.db
 # Logs
 *.log
 
-# Configs personales (secrets)
+# Configs (secrets)
 config.json
 config.*.json
 *.env
@@ -39,16 +39,16 @@ config.*.json
 .env.local
 .env.*.local
 
-# Executables y build
+# Executables and build
 *.exe
 *.msi
 build/
 
-# Scripts de prueba
+# Test scripts
 test-*.ps1
 test-*.sh
 
-# Temporales
+# Temporary files
 *.tmp
 *.temp
 *~
